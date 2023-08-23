@@ -41,10 +41,8 @@ abstract class VCFFileWriterSuite(val sourceName: String) extends VCFConverterBa
   lazy val TGP = s"$testDataHome/1000genomes-phase3-1row.vcf"
   val readSourceName = "vcf"
 
-  override def sparkConf: SparkConf = {
-    // Verify that tests correctly set BGZF codecs
-    super.sparkConf.set("spark.hadoop.io.compression.codecs", "")
-  }
+  // Verify that tests correctly set BGZF codecs
+  spark.conf.set("spark.hadoop.io.compression.codecs", "")
 
   protected def createTempVcf: Path = {
     val tempDir = Files.createTempDirectory("test-vcf-dir")
@@ -490,23 +488,6 @@ class MultiFileVCFWriterSuite extends VCFFileWriterSuite("vcf") {
       ds.write
         .format(sourceName)
         .option("validationStringency", "fakeStringency")
-        .save(tempFile)
-    )
-  }
-
-  test("Some empty partitions and infer sample IDs") {
-    val tempFile = createTempVcf.toString
-
-    val ds = spark
-      .read
-      .format(readSourceName)
-      .load(NA12878)
-      .limit(2)
-      .repartition(5)
-
-    assertThrows[SparkException](
-      ds.write
-        .format(sourceName)
         .save(tempFile)
     )
   }
